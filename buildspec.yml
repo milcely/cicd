@@ -2,19 +2,20 @@ version: 0.2
 phases:
   pre_build:
     commands:
+      - mvn clean install
       - echo Login into Amazon ECR started on `date`
       - aws --version
-      - echo "Logging into Amazon ECR..."
-      - aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 038462751546.dkr.ecr.us-east-2.amazonaws.com
+      - REPOSITORY_URI=038462751546.dkr.ecr.us-east-2.amazonaws.com/cicd-registry
+      - aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin $REPOSITORY_URI
       - echo "Setting repository URI..."
-      - REPOSITORY_URI=038462751546.dkr.ecr.us-east-2.amazonaws.com/cicd
+      - echo $REPOSITORY_URI
+      - echo "Set COMMIT_HASH..."
+      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
       - echo "Setting image tag..."
-      - IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+      - IMAGE_TAG=build-$(echo $CODEBUILD_BUILD_ID | awk -F":" '{print $2}')
   build:
     commands:
       - echo "Build and tagging started image on `date`"
-      - echo "running mvn clean install..."
-      - mvn clean install
       - echo "Building docker image..."
       - docker build -t $REPOSITORY_URI:latest .
       - echo "Tagging the Docker image..."
@@ -25,13 +26,15 @@ phases:
       - echo "Pushing to repository..."
       - docker push $REPOSITORY_URI:latest
       - docker push $REPOSITORY_URI:$IMAGE_TAG
-      - echo "setting container name..."
-      - DOCKER_CONTAINER_NAME=cicd
-      - echo "Writing image definitions file..."
+      - echo Writing image definitions file...
+      - printf '[{"name":"cicd-service","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
+      - echo Writing image definitions file...      - echo "setting container name..."
+      - DOCKER_CONTAINER_NAME=cicd-registry
       - printf '[{"name":"%s","imageUri":"%s"}]' $DOCKER_CONTAINER_NAME $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
       - echo $DOCKER_CONTAINER_NAME
-      - echo printing image definitions file
+      - echo printing imagedefinitions.json
       - cat imagedefinitions.json
 artifacts:
     files:
       - imagedefinitions.json
+      - target/app.jar

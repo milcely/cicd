@@ -1,12 +1,9 @@
-FROM maven:3.9.5 AS build
-WORKDIR /app
-COPY pom.xml /app
-RUN mvn dependency:resolve
-COPY . /app
-RUN mvn clean
-RUN mvn package -DskipTests -X
-
 FROM openjdk
-COPY --from=build /app/target/*.jar app.jar
+# Set working directory in the container
+WORKDIR /app
+# Copy the compiled Java application JAR file to the container
+COPY target/*.jar app.jar
+# Expose the port that the application will listen on
 EXPOSE 8080
+# Run the application
 CMD ["java", "jar", "app.jar"]
