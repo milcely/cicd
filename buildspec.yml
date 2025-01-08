@@ -9,7 +9,7 @@ phases:
       - echo "Setting repository URI..."
       - REPOSITORY_URI=038462751546.dkr.ecr.us-east-2.amazonaws.com/cicd
       - echo "Setting image tag..."
-      - IMAGE_TAG=build-$(echo $CODEBUILD_BUILD_ID | awk -F":" '{print $2}')
+      - IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
   build:
     commands:
       - echo "Build and tagging started image on `date`"
