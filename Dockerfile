@@ -1,3 +1,4 @@
+# jdk
 FROM openjdk:21
 # Set working directory in the container
 WORKDIR /app
