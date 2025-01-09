@@ -1,4 +1,4 @@
-FROM openjdk
+FROM openjdk:21
 # Set working directory in the container
 WORKDIR /app
 # Copy the compiled Java application JAR file to the container
